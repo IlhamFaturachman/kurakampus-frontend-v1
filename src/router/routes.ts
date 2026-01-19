@@ -1,17 +1,23 @@
 import type { RouteRecordRaw } from 'vue-router'
 
 const routes: RouteRecordRaw[] = [
-  // Main App Routes (Protected)
+  // Landing Page (Public)
   {
     path: '/',
+    name: 'landing',
+    component: () => import('pages/home/IndexPage.vue'),
+    meta: { requiresAuth: false, title: 'KuraKampus' }
+  },
+
+  // Main App Routes (Protected)
+  {
+    path: '/app',
     component: () => import('layouts/MainLayout.vue'),
     meta: { requiresAuth: true },
     children: [
       {
         path: '',
-        name: 'home',
-        component: () => import('pages/home/IndexPage.vue'),
-        meta: { title: 'Home' }
+        redirect: '/app/dashboard'
       },
       {
         path: 'dashboard',
