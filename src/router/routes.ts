@@ -1,18 +1,55 @@
-import type { RouteRecordRaw } from 'vue-router';
+import type { RouteRecordRaw } from 'vue-router'
 
 const routes: RouteRecordRaw[] = [
+  // Main App Routes (Protected)
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/IndexPage.vue') }],
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'home',
+        component: () => import('pages/home/IndexPage.vue'),
+        meta: { title: 'Home' }
+      },
+      {
+        path: 'dashboard',
+        name: 'dashboard',
+        component: () => import('pages/dashboard/DashboardPage.vue'),
+        meta: { title: 'Dashboard' }
+      }
+    ]
   },
 
-  // Always leave this as last one,
-  // but you can also remove it
+  // Authentication Routes (Public)
+  {
+    path: '/auth',
+    component: () => import('layouts/AuthLayout.vue'),
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: 'login',
+        name: 'login',
+        component: () => import('pages/auth/LoginPage.vue'),
+        meta: { title: 'Login' }
+      },
+      {
+        path: 'signup',
+        name: 'signup',
+        component: () => import('pages/auth/SignupPage.vue'),
+        meta: { title: 'Sign Up' }
+      }
+    ]
+  },
+
+  // Error Pages
   {
     path: '/:catchAll(.*)*',
-    component: () => import('pages/ErrorNotFound.vue'),
-  },
-];
+    name: 'error-404',
+    component: () => import('pages/errors/ErrorNotFound.vue'),
+    meta: { title: 'Page Not Found' }
+  }
+]
 
-export default routes;
+export default routes
