@@ -1,7 +1,7 @@
 import { boot } from 'quasar/wrappers'
 import type { AxiosInstance } from 'axios';
 import axios from 'axios'
-import { useAuthStore } from 'src/stores/auth'
+import { useAuthStore } from '@/stores/auth'
 
 declare module 'vue' {
   interface ComponentCustomProperties {
@@ -12,7 +12,7 @@ declare module 'vue' {
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api',
 })
 
 export default boot(({ app, router }) => {
@@ -20,8 +20,8 @@ export default boot(({ app, router }) => {
   api.interceptors.request.use(
     (config) => {
       const authStore = useAuthStore()
-      if (authStore.token) {
-        config.headers.Authorization = `Bearer ${authStore.token}`
+      if (authStore.tokens?.accessToken) {
+        config.headers.Authorization = `Bearer ${authStore.tokens.accessToken}`
       }
       return config
     },
@@ -36,7 +36,7 @@ export default boot(({ app, router }) => {
     (error) => {
       if (error.response?.status === 401) {
         const authStore = useAuthStore()
-        authStore.logout()
+        void authStore.logout()
         void router.push({ name: 'login' })
       }
       return Promise.reject(error instanceof Error ? error : new Error(String(error)))

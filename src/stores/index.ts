@@ -1,5 +1,13 @@
-import { defineStore } from '#q-app/wrappers';
-import { createPinia } from 'pinia';
+/**
+ * Pinia stores entry point
+ * Exports all stores and provides store initialization
+ */
+
+import { createPinia, type Pinia } from 'pinia';
+
+// Export stores
+export * from './authStore';
+export * from './appStore';
 
 /*
  * When adding new properties to stores, you should also
@@ -22,11 +30,11 @@ declare module 'pinia' {
  * with the Store instance.
  */
 
-export default defineStore((/* { ssrContext } */) => {
-  const pinia = createPinia();
+export default function createStore(): Pinia {
+  const pinia: Pinia = createPinia();
 
   // You can add Pinia plugins here
   // pinia.use(SomePiniaPlugin)
 
   return pinia;
-});
+}

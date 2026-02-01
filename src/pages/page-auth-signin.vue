@@ -12,7 +12,7 @@
       </q-card-section>
 
       <q-card-section class="q-pt-lg">
-        <q-form @submit="handleLogin" class="q-gutter-md">
+        <q-form ref="loginForm" @submit.prevent="handleLogin" class="q-gutter-md">
           <q-input
             v-model="credentials.email"
             label="Email Address"
@@ -104,70 +104,68 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from 'src/stores/auth';
-import { Notify } from 'quasar';
+  import { ref, computed } from 'vue';
+  import { useRouter, useRoute } from 'vue-router';
+  import { useAuthStore } from '@/stores/auth';
+  import { Notify, type QForm } from 'quasar';
+  import { ROUTE_NAMES } from '@/constants';
 
-const router = useRouter();
-const authStore = useAuthStore();
+  const router = useRouter();
+  const route = useRoute();
+  const authStore = useAuthStore();
+  const loginForm = ref<QForm | null>(null);
 
-const credentials = ref({
-  email: '',
-  password: '',
-});
+  // Get redirect URL from query params
+  const redirectUrl = computed(() => {
+    const redirect = route.query['redirect'] as string | undefined;
+    return redirect ?? '/app';
+  });
 
-const loading = ref(false);
-const isPwd = ref(true);
-const rememberMe = ref(false);
+  const credentials = ref({
+    email: '',
+    password: '',
+  });
 
-const handleLogin = async (): Promise<void> => {
-  loading.value = true;
+  const loading = ref(false);
+  const isPwd = ref(true);
+  const rememberMe = ref(false);
 
-  try {
-    const success = await authStore.login(credentials.value);
+  const handleLogin = async (): Promise<void> => {
+    // Validate form first
+    const isValid = await loginForm.value?.validate();
+    if (!isValid) return;
 
-    if (success) {
+    loading.value = true;
+
+    try {
+      console.log('🔐 Attempting login...');
+      await authStore.login(credentials.value);
+      console.log('✅ Login successful, redirecting to:', redirectUrl.value);
+
       Notify.create({
         type: 'positive',
         message: 'Login successful!',
         position: 'top',
         timeout: 2000,
       });
-      await router.push({ name: 'dashboard' });
-    } else {
+
+      // Redirect to the URL from query params or default to dashboard
+      await router.push(redirectUrl.value);
+    } catch (err) {
+      console.error('❌ Login failed:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Invalid email or password';
       Notify.create({
         type: 'negative',
-        message: 'Invalid email or password',
+        message: errorMessage,
         position: 'top',
         timeout: 3000,
       });
+    } finally {
+      loading.value = false;
     }
-  } catch {
-    Notify.create({
-      type: 'negative',
-      message: 'An error occurred during login',
-      position: 'top',
-      timeout: 3000,
-    });
-  } finally {
-    loading.value = false;
-  }
-};
+  };
 
-const goToSignup = (): void => {
-  void router.push({ name: 'signup' });
-};
+  const goToSignup = (): void => {
+    void router.push({ name: ROUTE_NAMES.REGISTER });
+  };
 </script>
-
-<style scoped lang="scss">
-.login-card {
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.98);
-
-  @media (max-width: 600px) {
-    border-radius: 12px;
-  }
-}
-</style>

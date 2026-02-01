@@ -64,12 +64,10 @@
             :type="isPwd ? 'password' : 'text'"
             outlined
             color="secondary"
+            hint="Min 6 characters"
             :rules="[
               (val) => !!val || 'Password is required',
-              (val) => val.length >= 8 || 'Password must be at least 8 characters',
-              (val) =>
-                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(val) ||
-                'Password must contain uppercase, lowercase, and number',
+              (val) => val.length >= 6 || 'Password must be at least 6 characters',
             ]"
           >
             <template #prepend>
@@ -167,73 +165,87 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { Notify } from 'quasar';
+  import { ref } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { Notify } from 'quasar';
+  import { useAuthStore } from '@/stores/auth';
+  import { ROUTE_NAMES } from '@/constants';
 
-const router = useRouter();
+  const router = useRouter();
+  const authStore = useAuthStore();
 
-const formData = ref({
-  firstName: '',
-  lastName: '',
-  email: '',
-  password: '',
-  confirmPassword: '',
-});
+  const formData = ref({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
 
-const loading = ref(false);
-const isPwd = ref(true);
-const isConfirmPwd = ref(true);
-const agreedToTerms = ref(false);
+  const loading = ref(false);
+  const isPwd = ref(true);
+  const isConfirmPwd = ref(true);
+  const agreedToTerms = ref(false);
 
-const handleSignup = async (): Promise<void> => {
-  loading.value = true;
+  const handleSignup = async (): Promise<void> => {
+    loading.value = true;
 
-  try {
-    // TODO: Implement actual signup API call
-    // const response = await api.post('/auth/signup', {
-    //   firstName: formData.value.firstName,
-    //   lastName: formData.value.lastName,
-    //   email: formData.value.email,
-    //   password: formData.value.password,
-    // })
+    try {
+      console.log('📝 Attempting registration...');
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Auto-generate username from firstName_lastName (lowercase, only alphanumeric and underscore)
+      const generatedUsername = `${formData.value.firstName}_${formData.value.lastName}`
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, '');
 
-    Notify.create({
-      type: 'positive',
-      message: 'Account created successfully! Please login.',
-      position: 'top',
-      timeout: 3000,
-    });
+      await authStore.register({
+        firstName: formData.value.firstName,
+        lastName: formData.value.lastName,
+        email: formData.value.email,
+        username: generatedUsername,
+        password: formData.value.password,
+        passwordConfirmation: formData.value.confirmPassword,
+        agreeToTerms: agreedToTerms.value,
+      });
 
-    await router.push({ name: 'login' });
-  } catch {
-    Notify.create({
-      type: 'negative',
-      message: 'Failed to create account. Please try again.',
-      position: 'top',
-      timeout: 3000,
-    });
-  } finally {
-    loading.value = false;
-  }
-};
+      console.log('✅ Registration successful!');
 
-const goToLogin = (): void => {
-  void router.push({ name: 'login' });
-};
+      Notify.create({
+        type: 'positive',
+        message: 'Account created successfully! Redirecting to dashboard...',
+        position: 'top',
+        timeout: 3000,
+      });
+
+      await router.push({ name: ROUTE_NAMES.DASHBOARD });
+    } catch (err) {
+      console.error('❌ Registration failed:', err);
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to create account. Please try again.';
+      Notify.create({
+        type: 'negative',
+        message: errorMessage,
+        position: 'top',
+        timeout: 3000,
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const goToLogin = (): void => {
+    void router.push({ name: ROUTE_NAMES.LOGIN });
+  };
 </script>
 
 <style scoped lang="scss">
-.signup-card {
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.98);
+  .signup-card {
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.98);
 
-  @media (max-width: 600px) {
-    border-radius: 12px;
+    @media (max-width: 600px) {
+      border-radius: 12px;
+    }
   }
-}
 </style>
