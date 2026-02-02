@@ -40,17 +40,19 @@
     </div>
 
     <!-- Statistics Cards -->
-    <div class="row q-col-gutter-md q-mb-lg">
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat bordered class="stat-card">
-          <q-card-section>
+    <div class="stats-container q-mb-lg">
+      <div class="stat-item">
+        <q-card class="stat-card stat-card-primary">
+          <q-card-section class="q-pa-md">
             <div class="row items-center">
               <div class="col">
-                <div class="text-overline text-grey-7">Total Organisasi</div>
-                <div class="text-h4 text-weight-bold">{{ stats?.totalOrganizations ?? 0 }}</div>
+                <div class="text-caption text-grey-6 text-uppercase q-mb-xs">Total Organisasi</div>
+                <div class="text-h3 text-weight-bold text-primary">
+                  {{ stats?.totalOrganizations ?? 0 }}
+                </div>
               </div>
               <div class="col-auto">
-                <q-avatar size="56px" color="primary" text-color="white" icon="business" />
+                <q-avatar size="64px" color="primary" text-color="white" icon="business" />
               </div>
             </div>
           </q-card-section>
@@ -58,21 +60,22 @@
       </div>
 
       <template v-if="stats?.byJenis">
-        <div
-          v-for="(count, jenis) in limitedJenisStats"
-          :key="jenis"
-          class="col-12 col-sm-6 col-md-3"
-        >
-          <q-card flat bordered class="stat-card">
-            <q-card-section>
+        <div v-for="(count, jenis) in limitedJenisStats" :key="jenis" class="stat-item">
+          <q-card class="stat-card stat-card-jenis">
+            <q-card-section class="q-pa-md">
               <div class="row items-center">
                 <div class="col">
-                  <div class="text-overline text-grey-7">{{ jenis }}</div>
-                  <div class="text-h4 text-weight-bold">{{ count }}</div>
+                  <div class="text-caption text-grey-6 text-uppercase q-mb-xs">{{ jenis }}</div>
+                  <div
+                    class="text-h3 text-weight-bold"
+                    :style="{ color: getJenisColor(jenis as string) }"
+                  >
+                    {{ count }}
+                  </div>
                 </div>
                 <div class="col-auto">
                   <q-avatar
-                    size="56px"
+                    size="64px"
                     :color="getJenisColor(jenis as string)"
                     text-color="white"
                     icon="groups"
@@ -474,7 +477,7 @@
   const limitedJenisStats = computed(() => {
     if (!stats.value?.byJenis) return {};
     const entries = Object.entries(stats.value.byJenis);
-    return Object.fromEntries(entries.slice(0, 3));
+    return Object.fromEntries(entries.slice(0, 4));
   });
 
   // Table config
@@ -630,14 +633,55 @@
 </script>
 
 <style scoped lang="scss">
+  .stats-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+
+    @media (max-width: 1199px) {
+      .stat-item {
+        flex: 1 1 calc(25% - 0.9rem);
+      }
+    }
+
+    @media (max-width: 899px) {
+      .stat-item {
+        flex: 1 1 calc(33.333% - 0.8rem);
+      }
+    }
+
+    @media (max-width: 599px) {
+      .stat-item {
+        flex: 1 1 calc(50% - 0.6rem);
+      }
+    }
+  }
+
+  .stat-item {
+    flex: 1 1 calc(20% - 0.96rem);
+    min-width: 140px;
+  }
+
   .stat-card {
+    height: 100%;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
     transition:
-      transform 0.2s,
-      box-shadow 0.2s;
+      transform 0.3s ease,
+      box-shadow 0.3s ease;
 
     &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-6px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    &.stat-card-primary {
+      background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%);
+    }
+
+    &.stat-card-jenis {
+      background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
     }
   }
 </style>
